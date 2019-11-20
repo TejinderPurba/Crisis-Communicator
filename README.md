@@ -1,5 +1,10 @@
 # Wireless-Life-Alert
 
+$ pip install XBee
+
+XBee Documentation:
+https://python-xbee.readthedocs.io/en/latest/
+
 $ pip install twilio
 
 Twilio Documentation:
