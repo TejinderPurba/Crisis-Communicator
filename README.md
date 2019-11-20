@@ -5,6 +5,7 @@ $ pip install XBee
 XBee Documentation:
 https://python-xbee.readthedocs.io/en/latest/
 
+
 $ pip install twilio
 
 Twilio Documentation:
@@ -15,3 +16,8 @@ $ pip install git+https://github.com/Azelphur/pyPushBullet.git
 
 PushBullet Documentation:
 https://github.com/Azelphur/pyPushBullet/blob/master/README.md
+
+$ pip install pyyaml
+
+Yaml Documentation:
+https://pyyaml.org/wiki/PyYAMLDocumentation
