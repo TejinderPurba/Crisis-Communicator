@@ -1,0 +1,10 @@
+sms_account_sid: 
+sms_auth_token: 
+sms_sender_number: 
+sms_recipient_number: 
+sms_message: 
+pushbullet_api_key: 
+pushbullet_message:
+pushbullet_email:
+send_pushbullet_option:
+send_email_option: 
