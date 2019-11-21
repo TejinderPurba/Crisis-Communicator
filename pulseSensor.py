@@ -4,16 +4,13 @@ import serial, time, datetime, sys
 from xbee import XBee
 import threading
 
-serialPort = "/dev/ttyAMA0"    
-baudRate = 9600 
-
-ser = serial.Serial(serialPort, baudRate)
-xbee = XBee(ser, escaped=True)
-
 class PulseSensor:
-    def __init__(self):
+    def __init__(self, serialPort = "/dev/ttyAMA0", baudRate = 9600):
         self.BPM = 0
         self.voltage = 0
+        self.ser = serial.Serial(serialPort, baudRate)
+        self.xbee = XBee(self.ser, escaped=True)
+        #self.xbee = XBee(serial.Serial(serialPort, baudRate), escaped=True)           # Use of self in another self declaration might be bad
 
     def getBPMLoop(self):
         # init variables
@@ -32,7 +29,7 @@ class PulseSensor:
         lastTime = int(time.time()*1000)
         
         while not self.thread.stopped:
-            response = xbee.wait_read_frame()
+            response = self.xbee.wait_read_frame()
             Signal = response.get('samples')[0].get('adc-0')
             currentTime = int(time.time()*1000)
             self.voltage = Signal
@@ -106,5 +103,6 @@ class PulseSensor:
         self.thread.stopped = True
         self.BPM = 0
         self.voltage = 0
+        self.ser.close()
         return
     
