@@ -10,27 +10,26 @@ p = PulseSensor()
 p.startAsyncBPM()
 
 with open(r'Configuration.yaml') as file:
-	conf_list = yaml.full_load(file)
+  conf_list = yaml.full_load(file)
 
 try:
-    while True:
-        bpm = p.BPM
-        voltage = p.voltage
-        if bpm > 0:
-            print("BPM: %d\n" % bpm)
-        else:
-            print("No Heartbeat found\n")
-        if not msgSent and voltage > 0:
-        	print("SENDING EMERGENCY NOTIFICATIONS\n")
-        	sendSMS(conf_list['sms_account_sid'], conf_list['sms_auth_token'], conf_list['sms_sender_number'], conf_list['sms_sender_recipient'], conf_list['sms_message'])
+	while True:
+		bpm = p.BPM
+		voltage = p.voltage
+		if bpm > 0:
+			print("BPM: %d\n" % bpm)
+		else:
+			print("No Heartbeat found\n")
+		if not msgSent and voltage > 0:
+			print("SENDING EMERGENCY NOTIFICATIONS\n")
+			sendSMS(conf_list['sms_account_sid'], conf_list['sms_auth_token'], conf_list['sms_sender_number'], conf_list['sms_sender_recipient'], conf_list['sms_message'])
 			if (conf_list['send_pushbullet_option']):
 				sendPushBulletNotification(conf_list['pushbullet_api_key'], conf_list['pushbullet_message'])
 			if (conf_list['send_email_option']):
 				sendPushBulletEmail(conf_list['pushbullet_api_key'], conf_list['pushbullet_message'], conf_list['pushbullet_email'])
-            print("EMERGENCY NOTIFICATIONS SENT\n")
+			print("EMERGENCY NOTIFICATIONS SENT\n")
 			msgSent = True
 			msgSentTime = time.time()
-        time.sleep(1)
+		time.sleep(1)
 except:
-    p.stopAsyncBPM()
-
+  p.stopAsyncBPM()

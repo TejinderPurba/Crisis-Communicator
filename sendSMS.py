@@ -1,6 +1,6 @@
 from twilio.rest import Client
 
-sendSMS (str account_sid, str auth_token, str sender, str recipient, str msgToSend) {
+def sendSMS(account_sid, auth_token, sender, recipient, msgToSend):
 
     client = Client(account_sid, auth_token)
 
@@ -11,4 +11,4 @@ sendSMS (str account_sid, str auth_token, str sender, str recipient, str msgToSe
                      to=recipient
                  )
     print(message.sid)
-}
+

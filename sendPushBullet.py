@@ -1,17 +1,17 @@
 from pushbullet.pushbullet import PushBullet
 
-sendPushBulletNotification(str apiKey, str message) {
+def sendPushBulletNotification(apiKey, message):
     p = PushBullet(apiKey)
     p.pushNote(devices[0]["iden"], 'EMERGENCY', message)
-}
 
-sendPushBulletEmail(str apiKey, str message, str email) {
+
+def sendPushBulletEmail(apiKey, message, email):
     p = PushBullet(apiKey)
     p.pushNote(email, 'EMERGENCY', message, recipient_type='email')
-}
 
-displayPushBulletDevices(str apiKey) {
+
+def displayPushBulletDevices(apiKey):
     p = PushBullet(apiKey)
     devices = p.getDevices()
     print(devices)
-}
+
