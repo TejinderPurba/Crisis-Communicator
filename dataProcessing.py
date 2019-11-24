@@ -4,14 +4,30 @@
 
 import serial, time, datetime, sys
 from xbee import XBee, ZigBee
-import threading
+import threading, queue
 
-class PulseSensor:
+class DataProcessing:
     def __init__(self, serialPort = "/dev/ttyAMA0", baudRate = 9600):
         self.BPM = 0
-        self.voltage = 0
+        self.temp = -100
+        self.motion = False
+        self.pulseVoltage = 0
         self.ser = serial.Serial(serialPort, baudRate)
         self.xbee = ZigBee(serial.Serial(serialPort, baudRate), escaped=False)
+        self.bpmQueue
+        self.tempQueue
+        self.alarm
+
+    def getXBeeValuesLoop(self):
+        while not self.threadXBee.stopped:
+            response = self.xbee.wait_read_frame()
+            bpmVal = response.get('samples')[0].get('adc-0')
+            tempVal = response.get('samples')[0].get('adc-1')
+            motionVal = response.get('samples')[0].get('dio-2')         # May be wrong, have to double check
+
+            self.bpmQueue.put(bpmVal)
+            self.tempQueue.put(tempVal)
+            self.motion = motionVal
 
     def getBPMLoop(self):
         # init variables
@@ -29,11 +45,10 @@ class PulseSensor:
         Pulse = False           # "True" when User's live heartbeat is detected. "False" when not a "live beat". 
         lastTime = int(time.time()*1000)
         
-        while not self.thread.stopped:
-            response = self.xbee.wait_read_frame()
-            Signal = response.get('samples')[0].get('adc-0')
+        while not self.threadBPM.stopped:
+            Signal = self.bpmQueue.get(block=True, timeout=None)
             currentTime = int(time.time()*1000)
-            self.voltage = Signal
+            self.pulseVoltage = Signal
             
             sampleCounter += currentTime - lastTime
             lastTime = currentTime
@@ -90,20 +105,63 @@ class PulseSensor:
                 self.BPM = 0
 
             time.sleep(0.005)
-            
-        
-    # Start getBPMLoop routine which saves the BPM in its variable
-    def startAsyncBPM(self):
-        self.thread = threading.Thread(target=self.getBPMLoop)
-        self.thread.stopped = False
-        self.thread.start()
+
+    def getTempLoop(self):
+        while not self.threadTemp.stopped:
+            Signal = self.tempQueue.get(block=True, timeout=None)
+            # put in code for analog to celsius formula if using TMP35
+            # else put in code for one-wire DS18B20 (see if SunFounder does the library stuff automatically)
+
+    # Not currently in use. Overtaken by pin 13 on XBee (nOn_Sleep)
+    def soundAlarm(self):
+        self.xbee.remote_at(dest_addr=b'\x1d\x14', command='D3', parameter=b'\x05')
+        self.xbee.remote_at(dest_addr=b'\x1d\x14', command='WR')
+
+    # Not currently in use. Overtaken by pin 13 on XBee (nOn_Sleep)
+    def silenceAlarm(self):
+        self.xbee.remote_at(dest_addr=b'\x1d\x14', command='D3', parameter=b'\x04')
+        self.xbee.remote_at(dest_addr=b'\x1d\x14', command='WR')
+
+    # Start getXBeeValuesLoop routine which saves the XBee values in their variables
+    def startAsyncXBee(self):
+        self.threadXBee = threading.Thread(target=self.getXBeeValuesLoop)
+        self.threadXBee.stopped = False
+        self.threadXBee.start()
         return
         
-    # Stop the routine
+    # Stop the BPM routine
+    def stopAsyncXBee(self):
+        self.threadXBee.stopped = True
+        self.bpmQueue.clear()
+        self.tempQueue.clear()
+        self.alarm = False
+        self.ser.close()
+        return
+
+    # Start getBPMLoop routine which saves the BPM in its variable
+    def startAsyncBPM(self):
+        self.threadBPM = threading.Thread(target=self.getBPMLoop)
+        self.threadBPM.stopped = False
+        self.threadBPM.start()
+        return
+        
+    # Stop the BPM routine
     def stopAsyncBPM(self):
-        self.thread.stopped = True
+        self.threadBPM.stopped = True
         self.BPM = 0
         self.voltage = 0
-        self.ser.close()
+        return
+
+    # Start getTempLoop routine which saves the temp in its variable
+    def startAsyncTemp(self):
+        self.threadTemp = threading.Thread(target=self.getTempLoop)
+        self.threadTemp.stopped = False
+        self.threadTemp.start()
+        return
+        
+    # Stop the temp routine
+    def stopAsyncTemp(self):
+        self.threadTemp.stopped = True
+        self.temp = -100
         return
     
