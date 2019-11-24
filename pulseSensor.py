@@ -1,7 +1,9 @@
+
+
 # Forked and modified from: https://github.com/tutRPi/Raspberry-Pi-Heartbeat-Pulse-Sensor/blob/master/pulsesensor.py
 
 import serial, time, datetime, sys
-from xbee import XBee
+from xbee import XBee, ZigBee
 import threading
 
 class PulseSensor:
@@ -9,8 +11,7 @@ class PulseSensor:
         self.BPM = 0
         self.voltage = 0
         self.ser = serial.Serial(serialPort, baudRate)
-        self.xbee = XBee(self.ser, escaped=True)
-        #self.xbee = XBee(serial.Serial(serialPort, baudRate), escaped=True)           # Use of self in another self declaration might be bad
+        self.xbee = ZigBee(serial.Serial(serialPort, baudRate), escaped=True)
 
     def getBPMLoop(self):
         # init variables
@@ -79,7 +80,7 @@ class PulseSensor:
                 P = thresh                              # reset these for next time
                 T = thresh
 
-            if N > 2500:                                # if 2.5 seconds go by without a beat
+            if N > 4000:                                # if 4 seconds go by without a beat
                 thresh = 512                            # set thresh default
                 P = 512                                 # set P default
                 T = 512                                 # set T default
