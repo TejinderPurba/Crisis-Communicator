@@ -11,7 +11,7 @@ class PulseSensor:
         self.BPM = 0
         self.voltage = 0
         self.ser = serial.Serial(serialPort, baudRate)
-        self.xbee = ZigBee(serial.Serial(serialPort, baudRate), escaped=True)
+        self.xbee = ZigBee(serial.Serial(serialPort, baudRate), escaped=False)
 
     def getBPMLoop(self):
         # init variables
