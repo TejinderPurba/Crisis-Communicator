@@ -4,7 +4,7 @@
 
 import serial, time, datetime, sys
 from xbee import XBee, ZigBee
-import threading, queue
+import threading, Queue
 
 class DataProcessing:
     def __init__(self, serialPort = "/dev/ttyAMA0", baudRate = 9600):
@@ -14,17 +14,22 @@ class DataProcessing:
         self.pulseVoltage = 0
         self.ser = serial.Serial(serialPort, baudRate)
         self.xbee = ZigBee(serial.Serial(serialPort, baudRate), escaped=False)
-        self.bpmQueue
-        self.tempQueue
-        self.alarm
+        self.bpmQueue = Queue.Queue()
+        self.tempQueue = Queue.Queue()
+        self.msgRxTime = 0
 
     def getXBeeValuesLoop(self):
         while not self.threadXBee.stopped:
-            response = self.xbee.wait_read_frame()
+            try:
+                response = self.xbee.wait_read_frame()
+                self.msgRxTime = time.time()
+            except serial.SerialException:
+                self.msgRxTime = time.time()
+                continue
             bpmVal = response.get('samples')[0].get('adc-0')
             tempVal = response.get('samples')[0].get('adc-1')
-            motionVal = response.get('samples')[0].get('dio-2')         # May be wrong, have to double check
-
+            motionVal = response.get('samples')[0].get('dio-2')         
+            
             self.bpmQueue.put(bpmVal)
             self.tempQueue.put(tempVal)
             self.motion = motionVal
@@ -116,11 +121,13 @@ class DataProcessing:
     def soundAlarm(self):
         self.xbee.remote_at(dest_addr=b'\x1d\x14', command='D3', parameter=b'\x05')
         self.xbee.remote_at(dest_addr=b'\x1d\x14', command='WR')
+        return
 
     # Not currently in use. Overtaken by pin 13 on XBee (nOn_Sleep)
     def silenceAlarm(self):
         self.xbee.remote_at(dest_addr=b'\x1d\x14', command='D3', parameter=b'\x04')
         self.xbee.remote_at(dest_addr=b'\x1d\x14', command='WR')
+        return
 
     # Start getXBeeValuesLoop routine which saves the XBee values in their variables
     def startAsyncXBee(self):
@@ -132,10 +139,8 @@ class DataProcessing:
     # Stop the BPM routine
     def stopAsyncXBee(self):
         self.threadXBee.stopped = True
-        self.bpmQueue.clear()
-        self.tempQueue.clear()
-        self.alarm = False
-        self.ser.close()
+        self.bpmQueue.queue.clear()
+        self.tempQueue.queue.clear()
         return
 
     # Start getBPMLoop routine which saves the BPM in its variable
@@ -164,4 +169,19 @@ class DataProcessing:
         self.threadTemp.stopped = True
         self.temp = -100
         return
+        
+    def closeSerial(self):
+        self.ser.close()
+        return
+        
+    def clearValues(self):
+        self.bpmQueue.queue.clear()
+        self.tempQueue.queue.clear()
+        self.BPM = 0
+        self.temp = -100
+        self.motion = False
+        self.pulseVoltage = 0
+        self.msgRxTime = 0
+        return
+        
     
