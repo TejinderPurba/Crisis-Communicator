@@ -16,6 +16,15 @@ conf_list = None
 with open(r'Configuration.yaml') as file:
 	conf_list = yaml.full_load(file)
 
+def sendNotifications(sms_msg, pb_msg):
+	try:
+		sendSMS(conf_list['sms_account_sid'], conf_list['sms_auth_token'], conf_list['sms_sender_number'], conf_list['sms_recipient_number'], sms_msg)
+		if (conf_list['send_pushbullet_option']):
+			sendPushBulletNotification(conf_list['pushbullet_api_key'], pb_msg)
+		return True
+	except:
+		return False
+
 try:
 	while True:
 		time.sleep(1)
@@ -25,57 +34,57 @@ try:
 		motion = data.motion
 		bpmQueueSize = data.bpmQueue.qsize()
 		tempQueueSize = data.tempQueue.qsize()
+		msgRxTime = data.msgRxTime
 
-		if bpm > 0:
-			print("BPM: %d\n" % bpm)
-		else:
-			print("NO HEARTBEAT DETECTED\n")
-			
-		if temp > -100:
-			print("TEMPERATURE: %d\n" % temp)
-		else:
-			print("NO TEMPERATURE DETECTED\n")
+		if msgRxTime > 0:
+			if bpm > 0:
+				print("BPM: %d\n" % bpm)
+			else:
+				print("NO HEARTBEAT DETECTED\n")
+				
+			if temp > -100:
+				print("TEMPERATURE: %d\n" % temp)
+			else:
+				print("NO TEMPERATURE DETECTED\n")
 
-		if motion:
-			print("DEVICE MOTION DETECTED\n\n")
+			if motion:
+				print("DEVICE MOTION DETECTED\n\n")
+			else:
+				print("NO DEVICE MOTION DETECTED\n\n")
+				
 		else:
-			print("NO DEVICE MOTION DETECTED\n\n")
+			print("DEVICE IS OFF\n\n")
 
 		if not msgSent and (voltage > 0 or motion == True):
 			print("++++++++++++++++++++++++++++++++++++++++++++++\nSENDING EMERGENCY NOTIFICATIONS\n++++++++++++++++++++++++++++++++++++++++++++++\n")
-			sendNotifications(conf_list['sms_message'], conf_list['pushbullet_message'])
-			print("++++++++++++++++++++++++++++++++++++++++++++++\nEMERGENCY NOTIFICATIONS SENT\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
+			if (sendNotifications(conf_list['sms_message'], conf_list['pushbullet_message'])):
+				print("++++++++++++++++++++++++++++++++++++++++++++++\nEMERGENCY NOTIFICATIONS SENT\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
+			else:
+				print("++++++++++++++++++++++++++++++++++++++++++++++\nEMERGENCY NOTIFICATIONS FAILED TO SEND\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
 			msgSent = True
 			msgSentTime = time.time()
 
 		timeVal = int(time.time()) - int(msgSentTime)
-		if msgSentTime > 0 and (timeVal % 5 == 0):          # change to 30+ seconds when done testing
-			sms_msg = "VITALS WERE CAPTURED\n\n"
-			pb_msg = "VITALS WERE CAPTURED\n\n"
+		if msgSentTime > 0 and (timeVal % conf_list['vitals_interval'] == 0) and timeVal > 0:          
+			notif_msg = "VITALS WERE CAPTURED\n\n"
 			if bpm > 0:
-				sms_msg.join("BPM: %d\n" % bpm)
-				pb_msg.join("BPM: %d\n" % bpm)
-				vitalsCheck = True
+				notif_msg = notif_msg + "BPM: %d\n" % bpm
 			else:
-				sms_msg.join("BPM NOT DETECTED\n")
-				pb_msg.join("BPM NOT DETECTED\n")
+				notif_msg = notif_msg + "BPM WAS NOT DETECTED\n"
 			if temp > -100:
-				sms_msg.join("TEMPERATURE: %d\n" % temp)
-				pb_msg.join("TEMPERATURE: %d\n" % temp)
-				vitalsCheck = True
+				notif_msg = notif_msg + "TEMPERATURE: %d\n" % temp
 			else:
-				sms_msg.join("TEMPERATURE WAS NOT DETECTED\n")
-				pb_msg.join("TEMPERATURE WAS NOT DETECTED\n")
+				notif_msg = notif_msg + "TEMPERATURE WAS NOT DETECTED\n"
 			if motion:
-				sms_msg.join("DEVICE MOTION WAS DETECTED\n")
-				pb_msg.join("DEVICE MOTION WAS DETECTED\n")
-				vitalsCheck = True
+				notif_msg = notif_msg + "DEVICE MOTION WAS DETECTED\n"
 			else:
-				sms_msg.join("DEVICE MOTION WAS NOT DETECTED\n")
-				pb_msg.join("DEVICE MOTION WAS NOT DETECTED\n")
-			print("++++++++++++++++++++++++++++++++++++++++++++++\nSENDING VITALS NOTIFICATION\n++++++++++++++++++++++++++++++++++++++++++++++\n")
-			sendNotifications(sms_msg, pb_msg)
-			print("++++++++++++++++++++++++++++++++++++++++++++++\nVITALS NOTIFICATION SENT\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
+				notif_msg = notif_msg + "DEVICE MOTION WAS NOT DETECTED\n"
+			
+			print("++++++++++++++++++++++++++++++++++++++++++++++\nSENDING VITALS NOTIFICATIONS\n++++++++++++++++++++++++++++++++++++++++++++++\n")
+			if (sendNotifications(notif_msg, notif_msg)):
+				print("++++++++++++++++++++++++++++++++++++++++++++++\nVITALS NOTIFICATIONS SENT\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
+			else:
+				print("++++++++++++++++++++++++++++++++++++++++++++++\nVITALS NOTIFICATIONS FAILED TO SEND\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
 		
 		msgRxTime = data.msgRxTime
 		if (time.time() - msgRxTime > 20) and msgRxTime > 0:            # Approximation when XBee is sent to sleep mode
@@ -89,10 +98,3 @@ except:
 	data.stopAsyncBPM()
 	data.stopAsyncTemp()
 	data.closeSerial()
-
-def sendNotifications(sms_msg, pb_msg):
-    sendSMS(conf_list['sms_account_sid'], conf_list['sms_auth_token'], conf_list['sms_sender_number'], conf_list['sms_sender_recipient'], sms_msg)
-    if (conf_list['send_pushbullet_option']):
-        sendPushBulletNotification(conf_list['pushbullet_api_key'], pb_msg)
-    if (conf_list['send_email_option']):
-        sendPushBulletEmail(conf_list['pushbullet_api_key'], pb_msg, conf_list['pushbullet_email'])
