@@ -43,15 +43,13 @@ try:
 
 		if not msgSent and (voltage > 0 or motion == True):
 			print("++++++++++++++++++++++++++++++++++++++++++++++\nSENDING EMERGENCY NOTIFICATIONS\n++++++++++++++++++++++++++++++++++++++++++++++\n")
-			#sendNotifications(conf_list['sms_message'], conf_list['pushbullet_message'])
+			sendNotifications(conf_list['sms_message'], conf_list['pushbullet_message'])
 			print("++++++++++++++++++++++++++++++++++++++++++++++\nEMERGENCY NOTIFICATIONS SENT\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
 			msgSent = True
 			msgSentTime = time.time()
 
-		timeVal = time.time() - msgSentTime
-
-		if msgSentTime > 0 and (timeVal >= 5.0):          # change to 30 seconds when done testing
-			vitalsCheck = False
+		timeVal = int(time.time()) - int(msgSentTime)
+		if msgSentTime > 0 and (timeVal % 5 == 0):          # change to 30+ seconds when done testing
 			sms_msg = "VITALS WERE CAPTURED\n\n"
 			pb_msg = "VITALS WERE CAPTURED\n\n"
 			if bpm > 0:
@@ -75,16 +73,14 @@ try:
 			else:
 				sms_msg.join("DEVICE MOTION WAS NOT DETECTED\n")
 				pb_msg.join("DEVICE MOTION WAS NOT DETECTED\n")
-			if vitalsCheck:
-				print("++++++++++++++++++++++++++++++++++++++++++++++\nSENDING VITALS NOTIFICATION\n++++++++++++++++++++++++++++++++++++++++++++++\n")
-				#sendNotifications(sms_msg, pb_msg)
-				print("++++++++++++++++++++++++++++++++++++++++++++++\nVITALS NOTIFICATION SENT\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
-			vitalsCheck = False 
-			msgSentTime = 0
+			print("++++++++++++++++++++++++++++++++++++++++++++++\nSENDING VITALS NOTIFICATION\n++++++++++++++++++++++++++++++++++++++++++++++\n")
+			sendNotifications(sms_msg, pb_msg)
+			print("++++++++++++++++++++++++++++++++++++++++++++++\nVITALS NOTIFICATION SENT\n++++++++++++++++++++++++++++++++++++++++++++++\n\n")
 		
 		msgRxTime = data.msgRxTime
-		if (time.time() - msgRxTime > 20) and msgRxTime > 0:            # Approximation when XBee is sent to sleep mode, change to 30+ after testing
+		if (time.time() - msgRxTime > 20) and msgRxTime > 0:            # Approximation when XBee is sent to sleep mode
 			msgSent = False
+			msgSentTime = 0
 			data.clearValues()
 			time.sleep(1)
 		
@@ -92,6 +88,7 @@ except:
 	data.stopAsyncXBee()
 	data.stopAsyncBPM()
 	data.stopAsyncTemp()
+	data.closeSerial()
 
 def sendNotifications(sms_msg, pb_msg):
     sendSMS(conf_list['sms_account_sid'], conf_list['sms_auth_token'], conf_list['sms_sender_number'], conf_list['sms_sender_recipient'], sms_msg)
