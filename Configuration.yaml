@@ -1,9 +1,11 @@
 sms_account_sid: 
 sms_auth_token: 
 sms_sender_number: 
-sms_recipient_number: 
 sms_message: 
 pushbullet_api_key: 
 pushbullet_message: 
 send_pushbullet_option: 
 vitals_interval: 
+sms_recipient_number: 
+ - +1
+ - +1

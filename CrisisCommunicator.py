@@ -18,7 +18,8 @@ with open(r'Configuration.yaml') as file:
 
 def sendNotifications(sms_msg, pb_msg):
 	try:
-		sendSMS(conf_list['sms_account_sid'], conf_list['sms_auth_token'], conf_list['sms_sender_number'], conf_list['sms_recipient_number'], sms_msg)
+		for item in conf_list['sms_recipient_number']:
+			sendSMS(conf_list['sms_account_sid'], conf_list['sms_auth_token'], conf_list['sms_sender_number'], item, sms_msg)
 		if (conf_list['send_pushbullet_option']):
 			sendPushBulletNotification(conf_list['pushbullet_api_key'], pb_msg)
 		return True
