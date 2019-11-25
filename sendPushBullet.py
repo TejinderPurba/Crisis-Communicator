@@ -2,6 +2,7 @@ from pushbullet.pushbullet import PushBullet
 
 def sendPushBulletNotification(apiKey, message):
     p = PushBullet(apiKey)
+    devices = p.getDevices()
     p.pushNote(devices[0]["iden"], 'EMERGENCY', message)
 
 
