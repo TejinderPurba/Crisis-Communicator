@@ -114,7 +114,8 @@ class DataProcessing:
     def getTempLoop(self):
         while not self.threadTemp.stopped:
             Signal = self.tempQueue.get(block=True, timeout=None)
-            # put in code for analog to celsius formula if using TMP35
+            #temperature = ((Signal*3.2258) - 500) / 10.0            # code for TMP36 using 3.3v as input, double check for errors
+            #self.temp = temperature
             # else put in code for one-wire DS18B20 (see if SunFounder does the library stuff automatically)
 
     # Not currently in use. Overtaken by pin 13 on XBee (nOn_Sleep)
