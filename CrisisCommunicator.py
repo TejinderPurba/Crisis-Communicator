@@ -44,7 +44,7 @@ try:
 				print("NO HEARTBEAT DETECTED\n")
 				
 			if temp > -100:
-				print("TEMPERATURE: %d\n" % temp)
+				print("TEMPERATURE: %.1fC\n" % temp)
 			else:
 				print("NO TEMPERATURE DETECTED\n")
 
@@ -73,7 +73,7 @@ try:
 			else:
 				notif_msg = notif_msg + "BPM WAS NOT DETECTED\n"
 			if temp > -100:
-				notif_msg = notif_msg + "TEMPERATURE: %d\n" % temp
+				notif_msg = notif_msg + "TEMPERATURE: %.1fC\n" % temp
 			else:
 				notif_msg = notif_msg + "TEMPERATURE WAS NOT DETECTED\n"
 			if motion:
