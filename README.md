@@ -2,7 +2,7 @@
 
 ## Description
 The Crisis Communicator is a wearable device intended to provide emergency communication in a time of need.
-It supplies quick transmission times to a coordinator device connected to a Raspberry Pi, which handles the SMS and PushBullet notification sending, and processes the vital monitors onboard the device.
+It supplies quick transmission times to a coordinator device (XBee S2C) connected to a Raspberry Pi, which handles the SMS and PushBullet notification sending, and processes the vital monitors onboard the device.
  
 
 ## Packages to be installed
